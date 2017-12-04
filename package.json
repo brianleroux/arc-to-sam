@@ -1,0 +1,30 @@
+{
+  "name": "arc-to-sam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "pkg": "sam package --template-file sam.json --s3-bucket uhm1 --output-template-file packaged-template.yaml",
+    "deploy": "aws cloudformation deploy --template-file /Users/brianleroux/Desktop/arc-to-sam/packaged-template.yaml --stack-name arc-2-sam",
+    "test": "tape test/*-test.js | tap-spec && npm run pkg && npm run deploy"
+  },
+  "keywords": [],
+  "author": "Brian LeRoux <b@brian.io>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "eslint": "^4.12.1",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.8.0"
+  },
+  "dependencies": {
+    "@architect/parser": "^1.0.6",
+    "@smallwins/validate": "^4.3.0",
+    "aws-sdk": "^2.162.0",
+    "js-yaml": "^3.10.0",
+    "just-pascal-case": "^1.0.0",
+    "run-waterfall": "^1.1.3"
+  }
+}

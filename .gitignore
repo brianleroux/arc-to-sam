@@ -1,0 +1,4 @@
+packaged-template.yaml
+package-lock.json
+node_modules/
+sam.json
