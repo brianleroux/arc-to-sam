@@ -26,14 +26,66 @@ module.exports = function arcToSAM(params) {
         Function: {
           Runtime: 'nodejs6.10',
           Handler: 'index.handler',
-          CodeUri: 's3://uhm1/mock-fn.js.zip'
+          CodeUri: 's3://uhm1/mock-fn.js.zip',
         }
       },
-      Resources: {}, 
+      Resources: {
+        LambdaExecutionRole: {
+          Type: "AWS::IAM::Role",
+          /*ManagedPolicyArns: ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],*/
+          Properties: {
+            AssumeRolePolicyDocument: {
+              Version: "2012-10-17",
+              Statement: [{
+                Effect: "Allow",
+                Principal: { "Service": ["lambda.amazonaws.com"] },
+                Action: ["sts:AssumeRole"]
+              }]
+            },
+          },
+        },
+      }, 
     }
 
     // loop thru doing everything for each env
     ;['staging', 'production'].forEach(env=> {
+
+      // setup text/html routes in api gateway
+      if (arc.html) {
+        var apiName = pascal(`${app}-${env}`)
+        sam.Resources[apiName] = {
+          Type: 'AWS::Serverless::Api',
+          Properties: {
+            StageName: env,
+            DefinitionBody: {
+              swagger: '2.0',
+              info: {
+                title: {
+                  Ref: 'AWS::StackName'
+                }
+              },
+              paths: {}
+            }
+          }
+        }
+        // add permissions
+        sam.Resources[apiName].LambdaPermission = {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "Action": "lambda:invokeFunction",
+            "FunctionName": {"Fn::GetAtt": ["GreetingLambda", "Arn"]},
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": ["", ["arn:aws:execute-api:", {"Ref": "AWS::Region"}, ":", {"Ref": "AWS::AccountId"}, ":", {"Ref": apiName}, "/*"]]
+            }
+          }
+        },
+        // add paths
+        arc.html.forEach(route=> {
+          var pathsRoot = sam.Resources[apiName].Properties.DefinitionBody.paths 
+          Object.assign(pathsRoot, _getSwagger({route, env, app}))
+        })
+      }
 
       // creates text/html functions
       arc.html.forEach(route=> {
@@ -41,7 +93,8 @@ module.exports = function arcToSAM(params) {
         sam.Resources[name] = {
           Type: 'AWS::Serverless::Function',
           Properties: {
-            Events: {}
+            Events: {},
+            Role: { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
           }
         }
         var method = route[0].toUpperCase()
@@ -49,7 +102,7 @@ module.exports = function arcToSAM(params) {
         sam.Resources[name].Properties.Events[name] = {
           Type: 'Api',
           Properties: {
-            RestApiId: `!Ref ${pascal(`${app}-${env}`)}`,
+            RestApiId: apiName, //`!Ref ${pascal(`${app}-${env}`)}`,
             Path: path,
             Method: method,
           }
@@ -65,30 +118,6 @@ module.exports = function arcToSAM(params) {
       // creates dynamo tables
       // creates dynamo indices
       // creates dynamo trigger functions
-
-      // setup text/html routes in api gateway
-      if (arc.html) {
-        sam.Resources[pascal(`${app}-${env}`)] = {
-          Type: 'AWS::Serverless::Api',
-          Properties: {
-            StageName: env,
-            DefinitionBody: {
-              swagger: '2.0',
-              info: {
-                title: {
-                  Ref: 'AWS::StackName'
-                }
-              },
-              paths: {}
-            }
-          }
-        }
-        // add paths
-        arc.html.forEach(route=> {
-          var pathsRoot = sam.Resources[pascal(`${app}-${env}`)].Properties.DefinitionBody.paths 
-          Object.assign(pathsRoot, _getSwagger({route, env, app}))
-        })
-      }
 
     // end env loop
     })
