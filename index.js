@@ -32,8 +32,8 @@ module.exports = function arcToSAM(params) {
       Resources: {
         LambdaExecutionRole: {
           Type: "AWS::IAM::Role",
-          /*ManagedPolicyArns: ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],*/
           Properties: {
+            ManagedPolicyArns: ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
             AssumeRolePolicyDocument: {
               Version: "2012-10-17",
               Statement: [{
@@ -52,6 +52,7 @@ module.exports = function arcToSAM(params) {
 
       // setup text/html routes in api gateway
       if (arc.html) {
+        // setup the RestApi itself
         var apiName = pascal(`${app}-${env}`)
         sam.Resources[apiName] = {
           Type: 'AWS::Serverless::Api',
