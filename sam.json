@@ -35,6 +35,9 @@
     },
     "TestappStaging": {
       "Type": "AWS::Serverless::Api",
+      "DependsOn": [
+        "TestappStagingGetIndex"
+      ],
       "Properties": {
         "StageName": "staging",
         "DefinitionBody": {
@@ -129,7 +132,9 @@
                 },
                 "x-amazon-apigateway-integration": {
                   "type": "aws",
-                  "uri": "Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestappStagingGetIndex.Arn}/invocations",
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestappStagingGetIndex.Arn}/invocations"
+                  },
                   "passthroughBehavior": "when_no_match",
                   "httpMethod": "POST",
                   "requestTemplates": {
@@ -257,6 +262,9 @@
     },
     "TestappProduction": {
       "Type": "AWS::Serverless::Api",
+      "DependsOn": [
+        "TestappProductionGetIndex"
+      ],
       "Properties": {
         "StageName": "production",
         "DefinitionBody": {
@@ -351,7 +359,9 @@
                 },
                 "x-amazon-apigateway-integration": {
                   "type": "aws",
-                  "uri": "Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestappProductionGetIndex.Arn}/invocations",
+                  "uri": {
+                    "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestappProductionGetIndex.Arn}/invocations"
+                  },
                   "passthroughBehavior": "when_no_match",
                   "httpMethod": "POST",
                   "requestTemplates": {

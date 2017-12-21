@@ -9,7 +9,7 @@
   "scripts": {
     "stats":"wc -l sam.json",
     "pkg": "sam package --template-file sam.json --s3-bucket uhm1 --output-template-file packaged-template.yaml",
-    "deploy": "aws cloudformation deploy --template-file /Users/brianleroux/Desktop/arc-to-sam/packaged-template.yaml --stack-name arc-2-sam",
+    "deploy": "aws cloudformation deploy --capabilities CAPABILITY_IAM --template-file /Users/brianleroux/Desktop/arc-to-sam/packaged-template.yaml --stack-name arc-2-sam",
     "test": "tape test/*-test.js | tap-spec && npm run pkg && npm run deploy"
   },
   "keywords": [],

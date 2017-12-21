@@ -12,7 +12,9 @@ module.exports = function _getSwaggerAWS(params) {
   var name = _getRouteName(params)
   return {
     type: "aws",
-    uri: 'Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${' + name + '.Arn}/invocations',
+    uri: {
+      'Fn::Sub': 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${' + name + '.Arn}/invocations',
+    },
     passthroughBehavior: "when_no_match",
     httpMethod: "POST",
     requestTemplates: {

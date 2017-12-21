@@ -52,10 +52,12 @@ module.exports = function arcToSAM(params) {
 
       // setup text/html routes in api gateway
       if (arc.html) {
+        
         // setup the RestApi itself
         var apiName = pascal(`${app}-${env}`)
         sam.Resources[apiName] = {
           Type: 'AWS::Serverless::Api',
+          DependsOn: arc.html.map(route=> _getRouteName({app, env, route})),
           Properties: {
             StageName: env,
             DefinitionBody: {
@@ -86,29 +88,31 @@ module.exports = function arcToSAM(params) {
           var pathsRoot = sam.Resources[apiName].Properties.DefinitionBody.paths 
           Object.assign(pathsRoot, _getSwagger({route, env, app}))
         })
+
+        // creates text/html functions
+        arc.html.forEach(route=> {
+          var name = _getRouteName({app, env, route})
+          sam.Resources[name] = {
+            Type: 'AWS::Serverless::Function',
+            Properties: {
+              Events: {},
+              Role: { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
+            }
+          }
+          var method = route[0].toUpperCase()
+          var path = route[1]
+          sam.Resources[name].Properties.Events[name] = {
+            Type: 'Api',
+            Properties: {
+              RestApiId: apiName, //`!Ref ${pascal(`${app}-${env}`)}`,
+              Path: path,
+              Method: method,
+            }
+          }
+        })
+
       }
 
-      // creates text/html functions
-      arc.html.forEach(route=> {
-        var name = _getRouteName({app, env, route})
-        sam.Resources[name] = {
-          Type: 'AWS::Serverless::Function',
-          Properties: {
-            Events: {},
-            Role: { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
-          }
-        }
-        var method = route[0].toUpperCase()
-        var path = route[1]
-        sam.Resources[name].Properties.Events[name] = {
-          Type: 'Api',
-          Properties: {
-            RestApiId: apiName, //`!Ref ${pascal(`${app}-${env}`)}`,
-            Path: path,
-            Method: method,
-          }
-        }
-      })
 
       // creates session tables
       // creates application/json functions
